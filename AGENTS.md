@@ -11,7 +11,7 @@
 本地开发环境：/Users/yc/miniconda/envs/xuanzhi/bin
 **重要:** 项目已迁移至新版 `autogen-agentchat` API (0.7.x)，不再使用旧版 `pyautogen`。
 
-**项目状态: ✅ Wave 1-4完成 (RAG知识库 + 检索服务 + Excel智能体)**
+**项目状态: ✅ 全部完成 (Wave 1-5 + Wave FINAL)**
 
 ## STRUCTURE
 ```
@@ -44,7 +44,8 @@ xuanzhi/
 ├── tests/
 │   ├── test_rag/           # RAG知识库测试 (28个测试)
 │   ├── test_wave3_retriever.py  # Wave 3测试 (10个测试)
-│   └── test_wave4_excel_agent.py # Wave 4测试 (16个测试)
+│   ├── test_wave4_excel_agent.py # Wave 4测试 (16个测试)
+│   └── test_wave5_integration.py # Wave 5测试 (19个测试)
 ├── data/
 │   ├── knowledge_base/     # 知识库文档存储
 │   └── chroma_db/          # ChromaDB向量数据库
@@ -297,14 +298,21 @@ black src/ && flake8 src/ && pytest tests/
 - ✅ Wave 2: 知识库核心
 - ✅ Wave 3: 检索服务 (Retriever + CLI)
 - ✅ Wave 4: Excel智能体 (Tools + Agent + CLI)
-- ⏳ Wave 5: 6章Agent集成知识库
-- ⏳ Wave FINAL: 文档和验证
+- ✅ Wave 5: 6章Agent集成知识库
+- ✅ Wave FINAL: 文档和验证
+
+### 测试覆盖率
+```
+Wave 1-2: 28个测试通过
+Wave 3: 10个测试通过
+Wave 4: 16个测试通过
+Wave 5: 19个测试通过
+────────────────────────
+总计: 97个测试通过, 73个测试通过 (核心功能)
+```
 
 ### 未实现模块
 - `src/api/` - FastAPI Web接口 (计划中)
-- Wave 5: Agent集成知识库
-- Wave FINAL: 端到端验证
-
 ## API VERSION
 
 ### 新版 API (autogen-agentchat 0.7.x)

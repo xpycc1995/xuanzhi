@@ -33,7 +33,7 @@ class BailianEmbedding:
         api_key: Optional[str] = None,
         model: str = DEFAULT_MODEL,
         dimensions: int = DEFAULT_DIMENSIONS,
-        batch_size: int = 20,
+        batch_size: int = 10,
     ):
         """
         初始化Embedding客户端

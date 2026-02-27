@@ -11,7 +11,7 @@ import logging
 
 # 文档解析库
 from pypdf import PdfReader
-from docx import Document
+from docx import Document as DocxDocument
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ class DocumentProcessor:
             提取的文本内容
         """
         try:
-            doc = Document(str(path))
+            doc = DocxDocument(str(path))
             paragraphs = []
             
             for para in doc.paragraphs:
