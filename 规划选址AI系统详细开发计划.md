@@ -55,7 +55,7 @@
 |------|------|----------|
 | 第一阶段：知识库搭建 | ✅ 已完成 | 2026-02-27 |
 | 第二阶段：Excel智能体 | ✅ 已完成 | 2026-02-27 |
-| 第三阶段：系统集成 | ⏳ 待开发 | - |
+| 第三阶段：系统集成 | ✅ 已完成 | 2026-02-27 |
 | 第四阶段：Web界面 | ⏳ 待开发 | - |
 
 ## 核心功能
@@ -83,10 +83,9 @@ RAG（Retrieval-Augmented Generation，检索增强生成）是一种将外部�
 | 文本分块 | src/rag/text_chunker.py | ✅ | 重叠滑动窗口，512字符块，128重叠 |
 | 检索服务 | src/rag/retriever.py | ✅ | 高级检索，Top-K，阈值过滤 |
 | CLI知识库 | scripts/kb.py | ✅ | init/add/query/stats/list/clear |
-| Excel工具 | src/tools/excel_tools.py | ✅ | read/write/search_knowledge_base |
-| Excel智能体 | src/agents/excel_assistant_agent.py | ✅ | 自动填充Agent |
-| CLI填充 | scripts/fill_excel.py | ✅ | analyze/fill/query |
-| 单元测试 | tests/ | ✅ | 54个测试用例 |
+| 知识检索工具 | src/tools/knowledge_tools.py | ✅ | 5个检索工具 (Wave 5) |
+| Agent集成知识库 | src/agents/*.py | ✅ | 6章Agent集成工具 (Wave 5) |
+| 单元测试 | tests/ | ✅ | 73个测试用例 |
 
 ## 向量模型选择（重点）
 
@@ -164,7 +163,38 @@ tests/
 └── test_wave4_excel_agent.py # 16个测试 (332行)
 ```
 
-## 第三阶段：系统集成 ⏳ 待开发
+## 第三阶段：系统集成 ✅ 已完成 (2026-02-27)
+
+| 天 | 任务 | 交付物 | 状态 |
+|----|------|--------|------|
+| D1-2 | 知识库检索工具 | src/tools/knowledge_tools.py | ✅ |
+| D3-4 | Orchestrator集成 | retriever支持 | ✅ |
+| D5-6 | 6章Agent集成知识库 | tools参数 | ✅ |
+| D7 | 集成测试 | test_wave5_integration.py | ✅ |
+
+### 已交付文件
+
+```
+src/tools/
+├── __init__.py              # 模块导出 (新增知识工具)
+├── excel_tools.py           # Excel工具 (Wave 4)
+└── knowledge_tools.py       # 知识检索工具 (Wave 5新增)
+
+src/agents/
+├── project_overview_agent.py   # 集成 search_regulations, search_cases
+├── site_selection_agent.py     # + search_technical_standards
+├── compliance_analysis_agent.py
+├── rationality_analysis_agent.py
+├── land_use_analysis_agent.py
+└── conclusion_agent.py
+
+src/services/
+└── autogen_orchestrator.py  # 新增 get_retriever/set_retriever
+
+tests/
+└── test_wave5_integration.py # 19个测试
+```
+
 
 # 核心代码实现
 

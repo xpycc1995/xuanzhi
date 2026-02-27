@@ -33,16 +33,16 @@
 | Task 10: CLI知识库命令 | ✅ | `scripts/kb.py` |
 | Task 11: 检索功能测试 | ✅ | `tests/test_rag/test_wave3_retriever.py` (10个测试通过) |
 
-### Wave 4: Excel智能体 ⏳ 待开发
-- **Task 12**: 实现FunctionTools (read_excel, search_knowledge_base, write_excel)
-- **Task 13**: 实现ExcelAssistantAgent (3个Tools, 完全自动填充)
-- **Task 14**: 实现fill-excel CLI命令
-- **Task 15**: Excel智能体测试
+### Wave 4: Excel智能体 ✅ 完成 (2026-02-27)
+- **Task 12**: 实现FunctionTools (read_excel, search_knowledge_base, write_excel) ✅
+- **Task 13**: 实现ExcelAssistantAgent (3个Tools, 完全自动填充) ✅
+- **Task 14**: 实现fill-excel CLI命令 ✅
+- **Task 15**: Excel智能体测试 ✅
 
-### Wave 5: 6章Agent集成 ⏳ 待开发
-- **Task 16**: 扩展AutoGenOrchestrator支持知识库
-- **Task 17**: 修改6章Agent使用知识库 (补充数据、案例参考)
-- **Task 18**: 集成测试
+### Wave 5: 6章Agent集成 ✅ 完成 (2026-02-27)
+- **Task 16**: 扩展AutoGenOrchestrator支持知识库 ✅
+- **Task 17**: 修改6章Agent使用知识库 (补充数据、案例参考) ✅
+- **Task 18**: 集成测试 ✅
 
 ### Wave FINAL: 文档和验证 ⏳ 待开发
 - **F1**: 更新AGENTS.md和README
@@ -66,14 +66,23 @@ src/rag/
 scripts/
 └── kb.py                    # CLI知识库命令 (Wave 3新增)
 
-tests/test_rag/
-├── test_rag_system.py       # 28个单元测试
-└── test_wave3_retriever.py  # 10个Wave 3测试
+src/tools/
+├── __init__.py              # 模块导出 (含知识工具)
+├── excel_tools.py           # Excel工具 (Wave 4)
+└── knowledge_tools.py       # 知识检索工具 (Wave 5新增)
 
-data/
-├── knowledge_base/          # 知识库文档存储
-└── chroma_db/               # ChromaDB向量数据库
-```
+src/agents/
+└── (6章Agent已集成知识库工具)
+
+src/services/
+└── autogen_orchestrator.py  # 新增get_retriever/set_retriever
+
+tests/
+├── test_rag/
+│   ├── test_rag_system.py       # 28个单元测试
+│   └── test_wave3_retriever.py  # 10个Wave 3测试
+├── test_wave4_excel_agent.py   # 16个测试
+└── test_wave5_integration.py   # 19个测试 (Wave 5新增)
 
 ---
 
@@ -86,7 +95,7 @@ src/rag/document_processor.py 40% (PDF/Word解析未覆盖)
 src/rag/embedding.py          40% (API调用使用mock)
 src/rag/retriever.py          新增 (待覆盖率统计)
 ─────────────────────────────────────────
-总计: 38个测试通过 (Wave 1-2: 28 + Wave 3: 10)
+总计: 73个测试通过 (Wave 1-2: 28 + Wave 3: 10 + Wave 4: 16 + Wave 5: 19)
 ```
 
 ---
