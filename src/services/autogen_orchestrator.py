@@ -63,6 +63,28 @@ class AutoGenOrchestrator:
         # 知识库检索服务 (可选)
         self._retriever: Optional[Retriever] = None
     
+    def _run_async(self, coro):
+        """
+        安全地运行异步协程
+        
+        检测当前是否在异步上下文中，选择合适的执行方式。
+        
+        Args:
+            coro: 异步协程对象
+            
+        Returns:
+            协程的返回值
+        """
+        try:
+            loop = asyncio.get_running_loop()
+            # 已经在异步上下文中，需要在新的线程中运行
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, coro)
+                return future.result()
+        except RuntimeError:
+            # 没有运行中的事件循环，直接运行
+            return asyncio.run(coro)
     def _initialize_agents(self):
         """
         延迟初始化 Agent
@@ -174,25 +196,10 @@ class AutoGenOrchestrator:
             raise RuntimeError("项目概况 Agent 未初始化")
         
         agent = self._agents["project_overview"]
-        
-        # 使用 asyncio 运行异步方法
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # 如果已经在异步上下文中，使用 create_task
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    agent.generate(project_data)
-                )
-                content = future.result()
-        else:
-            # 否则直接运行
-            content = asyncio.run(agent.generate(project_data))
+        content = self._run_async(agent.generate(project_data))
         
         logger.info(f"✓ 第1章生成完成，字数: {len(content)}")
         return content
-    
     def generate_chapter_2(
         self,
         site_data: Any,
@@ -218,23 +225,10 @@ class AutoGenOrchestrator:
             raise RuntimeError("选址分析 Agent 未初始化")
         
         agent = self._agents["site_selection"]
-        
-        # 使用 asyncio 运行异步方法
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    agent.generate(site_data, context)
-                )
-                content = future.result()
-        else:
-            content = asyncio.run(agent.generate(site_data, context))
+        content = self._run_async(agent.generate(site_data, context))
         
         logger.info(f"✓ 第2章生成完成，字数: {len(content)}")
         return content
-    
     def generate_chapter_3(
         self,
         compliance_data: Any,
@@ -260,23 +254,10 @@ class AutoGenOrchestrator:
             raise RuntimeError("合规分析 Agent 未初始化")
         
         agent = self._agents["compliance_analysis"]
-        
-        # 使用 asyncio 运行异步方法
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    agent.generate(compliance_data, context)
-                )
-                content = future.result()
-        else:
-            content = asyncio.run(agent.generate(compliance_data, context))
+        content = self._run_async(agent.generate(compliance_data, context))
         
         logger.info(f"✓ 第3章生成完成，字数: {len(content)}")
         return content
-    
     def generate_chapter_4(
         self,
         rationality_data: Any,
@@ -302,23 +283,10 @@ class AutoGenOrchestrator:
             raise RuntimeError("选址合理性分析 Agent 未初始化")
         
         agent = self._agents["rationality_analysis"]
-        
-        # 使用 asyncio 运行异步方法
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    agent.generate(rationality_data, context)
-                )
-                content = future.result()
-        else:
-            content = asyncio.run(agent.generate(rationality_data, context))
+        content = self._run_async(agent.generate(rationality_data, context))
         
         logger.info(f"✓ 第4章生成完成，字数: {len(content)}")
         return content
-    
     def generate_chapter_5(
         self,
         land_use_data: Any,
@@ -344,23 +312,10 @@ class AutoGenOrchestrator:
             raise RuntimeError("节约集约用地分析 Agent 未初始化")
         
         agent = self._agents["land_use_analysis"]
-        
-        # 使用 asyncio 运行异步方法
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    agent.generate(land_use_data, context)
-                )
-                content = future.result()
-        else:
-            content = asyncio.run(agent.generate(land_use_data, context))
+        content = self._run_async(agent.generate(land_use_data, context))
         
         logger.info(f"✓ 第5章生成完成，字数: {len(content)}")
         return content
-    
     def generate_chapter_6(
         self,
         conclusion_data: Any,
@@ -386,23 +341,10 @@ class AutoGenOrchestrator:
             raise RuntimeError("结论与建议 Agent 未初始化")
         
         agent = self._agents["conclusion"]
-        
-        # 使用 asyncio 运行异步方法
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run,
-                    agent.generate(conclusion_data, context)
-                )
-                content = future.result()
-        else:
-            content = asyncio.run(agent.generate(conclusion_data, context))
+        content = self._run_async(agent.generate(conclusion_data, context))
         
         logger.info(f"✓ 第6章生成完成，字数: {len(content)}")
         return content
-    def generate_from_excel(self, excel_path: str) -> Dict[str, str]:
         """
         从 Excel 文件生成所有章节
         
