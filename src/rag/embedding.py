@@ -9,6 +9,7 @@ from typing import List, Optional
 import logging
 import httpx
 from dotenv import load_dotenv
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 load_dotenv()
 
@@ -99,9 +100,20 @@ class BailianEmbedding:
         
         return all_embeddings
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((httpx.TimeoutException, httpx.NetworkError)),
+        reraise=True
+    )
     async def _embed_batch(self, texts: List[str]) -> List[List[float]]:
         """
-        批量获取向量
+        批量获取向量 (带重试机制)
+        
+        重试策略:
+        - 最多重试3次
+        - 指数退避: 2s, 4s, 8s
+        - 仅对超时和网络错误重试
         
         Args:
             texts: 一批文本
@@ -131,6 +143,12 @@ class BailianEmbedding:
                     # 按index排序确保顺序正确
                     items = sorted(data.get("data", []), key=lambda x: x.get("index", 0))
                     return [item.get("embedding", []) for item in items]
+                elif response.status_code in (429, 500, 502, 503, 504):
+                    # 可重试的错误码
+                    logger.warning(
+                        f"Embedding API临时错误: {response.status_code}, 将重试"
+                    )
+                    raise httpx.NetworkError(f"API返回{response.status_code}")
                 else:
                     logger.error(
                         f"Embedding API调用失败: {response.status_code} - {response.text}"
@@ -139,13 +157,18 @@ class BailianEmbedding:
                         f"Embedding API调用失败: {response.status_code}"
                     )
                     
-            except httpx.TimeoutException:
-                logger.error("Embedding API请求超时")
-                raise RuntimeError("Embedding API请求超时")
-            except Exception as e:
-                logger.error(f"Embedding API异常: {e}")
+            except httpx.TimeoutException as e:
+                logger.warning("Embedding API请求超时, 将重试")
                 raise
-    
+            except httpx.NetworkError as e:
+                logger.warning(f"Embedding API网络错误: {e}, 将重试")
+                raise
+            except RuntimeError:
+                # 非可重试错误, 直接抛出
+                raise
+            except Exception as e:
+                logger.error(f"Embedding API未知异常: {e}")
+                raise
     def embed_single(self, text: str) -> List[float]:
         """
         获取单个文本的向量
