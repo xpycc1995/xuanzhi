@@ -2,7 +2,7 @@
 
 基于AutoGen框架的多Agent协作系统,用于自动生成规划选址综合论证报告。
 
-**项目状态**: ✅ 全部6章Agent开发完成 + RAG知识库 | 版本: autogen-agentchat 0.7.x
+**项目状态**: ✅ 全部6章Agent + RAG知识库 + Excel智能体 | 版本: autogen-agentchat 0.7.x
 
 ## 项目简介
 
@@ -22,9 +22,11 @@
 - ✅ **智能内容生成**: 支持多种LLM(阿里云百炼Qwen/OpenAI GPT)
 - ✅ **标准化输出**: 严格按照标准模板生成Word文档
 - ✅ **Excel数据输入**: 支持通过Excel模板输入项目数据
+- ✅ **Excel智能填写**: ExcelAssistantAgent自动填充空白字段
 - ✅ **RAG知识库**: 基于ChromaDB的本地向量检索增强生成
 - ✅ **多格式文档解析**: 支持PDF/Word/Markdown/TXT
 - ✅ **百炼Embedding**: text-embedding-v3, 1024维向量
+- ✅ **CLI命令**: kb.py知识库管理 + fill_excel.py智能填充
 - ✅ **新版API**: 基于autogen-agentchat 0.7.x,异步调用更高效
 - ✅ **低成本**: 使用国产模型可节省70-90%成本
 
@@ -37,6 +39,7 @@
 - **文档解析**: pypdf, python-docx
 - **文档生成**: python-docx
 - **数据验证**: Pydantic
+- **CLI框架**: typer + rich
 - **开发语言**: Python 3.10+
 - **环境管理**: Conda / venv
 
@@ -45,10 +48,24 @@
 ```
 xuanzhi/
 ├── src/                      # 核心源码 (三层架构)
-│   ├── agents/               # Agent层 - 6个专业AI智能体
+│   ├── agents/               # Agent层 - 7个专业AI智能体
+│   │   ├── project_overview_agent.py
+│   │   ├── site_selection_agent.py
+│   │   ├── compliance_analysis_agent.py
+│   │   ├── rationality_analysis_agent.py
+│   │   ├── land_use_analysis_agent.py
+│   │   ├── conclusion_agent.py
+│   │   └── excel_assistant_agent.py    # Excel智能体 (Wave 4)
 │   ├── models/               # 数据层 - 6个Pydantic验证模型
 │   ├── services/             # 服务层 - 编排/文档/解析
 │   ├── rag/                  # RAG知识库 - 向量检索增强生成
+│   │   ├── document_processor.py
+│   │   ├── text_chunker.py
+│   │   ├── knowledge_base.py
+│   │   ├── embedding.py
+│   │   └── retriever.py      # 检索服务 (Wave 3)
+│   ├── tools/                # 工具层 - Excel工具 (Wave 4)
+│   │   └── excel_tools.py
 │   ├── core/                 # 配置 - LLM配置加载
 │   └── utils/                # 工具 - 日志配置
 ├── templates/
@@ -56,8 +73,13 @@ xuanzhi/
 │   ├── word_templates/        # Word报告模板
 │   └── excel_templates/       # Excel数据输入模板
 ├── scripts/                  # 测试脚本入口
+│   ├── test_all_agents.py
+│   ├── kb.py                 # CLI知识库命令 (Wave 3)
+│   └── fill_excel.py         # CLI Excel填充命令 (Wave 4)
 ├── tests/                    # pytest单元测试
-│   └── test_rag/             # RAG知识库测试 (28个测试)
+│   ├── test_rag/             # RAG知识库测试 (38个测试)
+│   ├── test_wave3_retriever.py
+│   └── test_wave4_excel_agent.py
 ├── data/
 │   ├── knowledge_base/       # 知识库文档存储
 │   └── chroma_db/            # ChromaDB向量数据库
@@ -119,8 +141,54 @@ python scripts/test_excel_input.py all
 # 运行RAG知识库测试
 pytest tests/test_rag/ -v --cov=src/rag
 
+# 运行Wave 3-4测试
+pytest tests/test_wave3_retriever.py tests/test_wave4_excel_agent.py -v
+
 # 运行全部测试
 pytest tests/
+```
+
+## CLI命令
+
+### 知识库管理 (Wave 3)
+
+```bash
+# 初始化知识库
+python scripts/kb.py init
+
+# 添加文档
+python scripts/kb.py add data/knowledge_base/
+
+# 检索
+python scripts/kb.py query "城乡规划要求" --top-k 5 --threshold 0.7
+
+# 统计
+python scripts/kb.py stats
+
+# 列出文档
+python scripts/kb.py list --limit 20
+
+# 清空
+python scripts/kb.py clear --force
+```
+
+### Excel智能填充 (Wave 4)
+
+```bash
+# 分析Excel空白字段
+python scripts/fill_excel.py analyze 项目数据.xlsx
+
+# 自动填充Excel
+python scripts/fill_excel.py fill 项目数据.xlsx
+
+# 输出到新文件
+python scripts/fill_excel.py fill 项目数据.xlsx -o 填充后.xlsx
+
+# 检索特定字段
+python scripts/fill_excel.py query "项目名称" -c "杭州市"
+
+# 列出工具
+python scripts/fill_excel.py tools
 ```
 
 ## RAG知识库使用
@@ -144,6 +212,25 @@ for r in results:
     print(f"相似度: {1-r['distance']:.2f}, 内容: {r['content'][:50]}...")
 ```
 
+### Retriever检索服务 (Wave 3)
+
+```python
+from src.rag import Retriever
+
+# 初始化
+retriever = Retriever()
+
+# 摄取文档
+retriever.ingest_file("regulations.pdf")
+retriever.ingest_directory("data/knowledge_base/")
+
+# 语义检索
+results = retriever.search("城乡规划要求", n_results=5, threshold=0.7)
+
+# 获取LLM上下文
+context = retriever.search_with_context("项目选址原则")
+```
+
 ### 文档处理
 
 ```python
@@ -160,7 +247,7 @@ chunks = chunker.chunk_text(doc.content)
 
 ## Agent架构
 
-系统包含6个专业Agent,对应报告的6个章节:
+系统包含7个专业Agent,对应报告的6个章节 + Excel智能体:
 
 | 章节 | Agent | 数据模型 | 提示词模板 | 状态 |
 |-----|-------|---------|-----------|------|
@@ -170,6 +257,7 @@ chunks = chunker.chunk_text(doc.content)
 | 第4章 | RationalityAnalysisAgent | RationalityData | rationality_analysis.md | ✅ |
 | 第5章 | LandUseAnalysisAgent | LandUseData | land_use_analysis.md | ✅ |
 | 第6章 | ConclusionAgent | ConclusionData | conclusion.md | ✅ |
+| Excel | ExcelAssistantAgent | - | - | ✅ |
 
 ## 数据流程
 
@@ -179,6 +267,8 @@ Excel模板 → ExcelParser → Pydantic模型 → Agent生成 → DocumentServi
               AutoGenOrchestrator (协调中心)
                     ↓
               KnowledgeBase (RAG知识库)
+                    ↓
+              ExcelAssistantAgent (智能填充)
 ```
 
 ## 新版API使用
@@ -208,6 +298,24 @@ result = await agent.run(task="请生成报告...")
 content = result.messages[-1].content
 ```
 
+### ExcelAssistantAgent使用
+
+```python
+from src.agents.excel_assistant_agent import create_excel_agent
+
+# 创建Excel智能体
+agent = create_excel_agent()
+
+# 分析Excel
+result = await agent.analyze_excel("项目数据.xlsx")
+
+# 自动填充
+result = await agent.fill_excel("项目数据.xlsx", threshold=0.7)
+
+# 检索特定字段
+result = await agent.query_for_field("项目名称", "杭州市")
+```
+
 ## 测试覆盖率
 
 ```
@@ -215,9 +323,24 @@ src/rag/knowledge_base.py     80% ✅
 src/rag/text_chunker.py       82% ✅
 src/rag/document_processor.py 40%
 src/rag/embedding.py          40%
+src/rag/retriever.py          新增
 ─────────────────────────────────────────
-RAG模块测试: 28个测试通过
+Wave 1-2: 28个测试通过
+Wave 3: 10个测试通过
+Wave 4: 16个测试通过
+总计: 54个测试通过
 ```
+
+## 开发进度
+
+| Wave | 阶段 | 状态 | 完成时间 |
+|------|------|------|----------|
+| Wave 1 | 环境验证 | ✅ 完成 | 2026-02-27 |
+| Wave 2 | 知识库核心 | ✅ 完成 | 2026-02-27 |
+| Wave 3 | 检索服务 | ✅ 完成 | 2026-02-27 |
+| Wave 4 | Excel智能体 | ✅ 完成 | 2026-02-27 |
+| Wave 5 | 6章Agent集成 | ⏳ 待开发 | - |
+| Wave FINAL | 文档和验证 | ⏳ 待开发 | - |
 
 ## 代码规范
 
