@@ -23,6 +23,9 @@ from src.models.site_selection_data import (
     ConsultationOpinion,
     SchemeComparison,
 )
+from src.services.data_validator import DataValidator, ValidationReport
+
+
 
 try:
     from src.models.compliance_data import ComplianceData
@@ -1636,6 +1639,69 @@ class ExcelParser:
         conclusion = self.parse_conclusion()
         logger.info("Excel 文件解析完成")
         return project_overview, site_selection, compliance, rationality, land_use, conclusion
+    
+    def validate_data(self, sheets: List[str] = None) -> 'ValidationReport':
+        """
+        验证Excel数据完整性
+        
+        使用 DataValidator 验证数据，返回验证报告。
+        
+        Args:
+            sheets: 要验证的Sheet列表，None则验证所有
+            
+        Returns:
+            ValidationReport: 验证报告
+        
+        Example:
+            >>> parser = ExcelParser("项目数据.xlsx")
+            >>> report = parser.validate_data()
+            >>> print(report.to_markdown())
+        """
+        validator = DataValidator()
+        return validator.validate_all(self, sheets)
+    
+    def fill_missing_data(
+        self,
+        output_path: str = None,
+        fill_value: str = "待补充"
+    ) -> Dict[str, int]:
+        """
+        填充缺失字段
+        
+        使用 DataValidator 填充缺失字段。
+        
+        Args:
+            output_path: 输出路径，None则覆盖原文件
+            fill_value: 填充值
+            
+        Returns:
+            填充字段统计 {sheet_name: filled_count}
+        
+        Example:
+            >>> parser = ExcelParser("项目数据.xlsx")
+            >>> stats = parser.fill_missing_data("填充后.xlsx")
+            >>> print(f"填充了 {sum(stats.values())} 个字段")
+        """
+        validator = DataValidator()
+        return validator.fill_missing_fields(self, output_path, fill_value)
+    
+    def get_missing_fields(self) -> Dict[str, List[str]]:
+        """
+        获取缺失字段列表
+        
+        快捷方法，返回按Sheet分组的缺失字段。
+        
+        Returns:
+            {sheet_name: [missing_fields]}
+        
+        Example:
+            >>> parser = ExcelParser("项目数据.xlsx")
+            >>> missing = parser.get_missing_fields()
+            >>> for sheet, fields in missing.items():
+            ...     print(f"{sheet}: {fields}")
+        """
+        report = self.validate_data()
+        return report.get_missing_fields()
     
     def close(self):
         """关闭工作簿"""

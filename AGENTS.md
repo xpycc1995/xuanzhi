@@ -24,8 +24,7 @@ xuanzhi/
 │   │   ├── rationality_analysis_agent.py
 │   │   ├── land_use_analysis_agent.py
 │   │   ├── conclusion_agent.py
-│   │   └── excel_assistant_agent.py    # Wave 4
-│   ├── models/             # 数据层 - 6个Pydantic验证模型
+│   │   └── excel_agent.py          # Wave 4 (混合模式)
 │   ├── services/           # 服务层 - 编排/文档/解析
 │   ├── rag/                # RAG知识库 - 向量检索增强生成
 │   │   ├── document_processor.py  # 多格式文档解析
@@ -68,7 +67,7 @@ xuanzhi/
 | **RAG知识库** | `src/rag/` | ChromaDB + 百炼Embedding |
 | **Retriever服务** | `src/rag/retriever.py` | 高级检索接口 |
 | **Excel工具** | `src/tools/excel_tools.py` | 6个工具函数 |
-| **Excel智能体** | `src/agents/excel_assistant_agent.py` | 自动填充Agent |
+| **Excel智能体** | `src/agents/excel_agent.py` | 混合模式: Python检索+模型写入 |
 | 提示词模板 | `templates/prompts/*.md` | 6个章节模板 |
 | CLI命令 | `scripts/kb.py`, `scripts/fill_excel.py` | 知识库+Excel命令 |
 
@@ -150,10 +149,12 @@ context = retriever.search_with_context("城乡规划要求")
 | write_excel | 写入单个字段 |
 | write_excel_batch | 批量写入字段 |
 
-### ExcelAssistantAgent
+### ExcelAgent (混合模式)
+
+**核心策略**: Python直接检索知识库 + 模型调用写入工具
 
 ```python
-from src.agents.excel_assistant_agent import create_excel_agent
+from src.agents.excel_agent import create_excel_agent
 
 # 创建Agent
 agent = create_excel_agent()
@@ -161,12 +162,19 @@ agent = create_excel_agent()
 # 分析Excel空白字段
 result = await agent.analyze_excel("项目数据.xlsx")
 
-# 自动填充
+# 自动填充 (Python检索 + 模型写入)
 result = await agent.fill_excel("项目数据.xlsx", threshold=0.7)
 
 # 检索特定字段
 result = await agent.query_for_field("项目名称", "杭州市")
 ```
+
+### 关键改进
+
+1. **混合模式**: Python直接检索知识库（可靠性100%），模型只负责写入
+2. **线程池**: 解决异步上下文中调用同步代码的问题
+3. **正则提取**: 从检索结果中提取特定字段值
+4. **分批写入**: 每批10个字段，避免模型认知负担
 
 ### CLI命令
 
