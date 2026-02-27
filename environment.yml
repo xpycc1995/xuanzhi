@@ -1,0 +1,29 @@
+# Conda环境配置文件
+# 规划选址论证报告AI智能体协作系统
+
+name: xuanzhi
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - fastapi==0.115.0
+    - uvicorn[standard]==0.32.0
+    - autogen-agentchat
+    - autogen-ext[openai]
+    - openai==1.54.0
+    - python-docx==1.1.2
+    - pypandoc==1.14
+    - pydantic==2.10.1
+    - pyyaml==6.0.2
+    - openpyxl==3.1.2
+    - aiohttp==3.11.0
+    - httpx==0.28.0
+    - python-dotenv==1.0.1
+    - python-multipart==0.0.17
+    - loguru==0.7.3
+    - black==24.10.0
+    - pytest==8.3.4
+    - pytest-asyncio==0.24.0

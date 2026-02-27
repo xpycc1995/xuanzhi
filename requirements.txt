@@ -1,0 +1,40 @@
+# 规划选址论证报告AI智能体协作系统 - Python依赖清单
+
+# Web框架
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# AI和Agent框架
+autogen-agentchat    # AutoGen框架 - 高级Agent编排API
+autogen-ext[openai]  # AutoGen OpenAI扩展
+openai==1.54.0             # OpenAI API
+
+# 文档处理
+python-docx==1.1.2         # Word文档生成
+pandoc==2.4                # 文档转换
+pypandoc==1.14             # Pandoc的Python封装
+
+# 数据处理
+pydantic==2.10.1           # 数据验证
+pyyaml==6.0.2              # 配置文件
+openpyxl==3.1.2            # Excel读写
+
+# 异步HTTP
+aiohttp==3.11.0            # 异步HTTP客户端
+httpx==0.28.0              # 现代化HTTP客户端
+
+# 工具库
+python-dotenv==1.0.1       # 环境变量管理
+python-multipart==0.0.17   # 文件上传支持
+
+# 日志和监控
+loguru==0.7.3              # 日志库
+
+# 代码质量
+black==24.10.0             # 代码格式化
+flake8==7.1.1              # 代码检查
+pylint==3.3.2              # 代码质量检查
+
+# 测试
+pytest==8.3.4              # 测试框架
+pytest-asyncio==0.24.0     # 异步测试支持
