@@ -11,6 +11,10 @@ from autogen_agentchat.messages import TextMessage
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from src.utils.logger import logger
+from src.tools.knowledge_tools import (
+    search_regulations,
+    search_cases,
+)
 
 
 class ProjectOverviewAgent:
@@ -22,6 +26,10 @@ class ProjectOverviewAgent:
     新版 API 使用方式:
     - AssistantAgent(name, model_client, system_message)
     - 通过 run() 或 run_stream() 方法调用
+    
+    Wave 5 更新:
+    - 集成知识库检索工具
+    - 支持检索法规标准和案例参考
     """
     
     def __init__(
@@ -53,12 +61,13 @@ class ProjectOverviewAgent:
         self.system_message = self._load_system_message(prompt_template_path)
         self.template_path = prompt_template_path
         
-        # 创建AutoGen AssistantAgent
+        # 创建AutoGen AssistantAgent (带知识库工具)
         self.agent = AssistantAgent(
             name="project_overview_agent",
             model_client=self.model_client,
             system_message=self.system_message,
-            description="负责生成规划选址论证报告第1章'项目概况'的专业AI Agent"
+            description="负责生成规划选址论证报告第1章'项目概况'的专业AI Agent",
+            tools=[search_regulations, search_cases],
         )
         
         logger.info(f"项目概况Agent初始化完成")

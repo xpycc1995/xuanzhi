@@ -25,3 +25,21 @@ __all__ = [
     "get_excel_tools",
     "TOOL_DESCRIPTIONS",
 ]
+
+from .knowledge_tools import (
+    search_knowledge_base as kb_search,
+    search_regulations,
+    search_cases,
+    search_technical_standards,
+    get_knowledge_base_stats,
+    KNOWLEDGE_TOOLS,
+)
+
+__all__.extend([
+    "kb_search",
+    "search_regulations",
+    "search_cases",
+    "search_technical_standards",
+    "get_knowledge_base_stats",
+    "KNOWLEDGE_TOOLS",
+])

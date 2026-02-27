@@ -10,6 +10,8 @@ from typing import Dict, Any, Optional
 
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
+from src.utils.logger import logger
+
 from src.core.autogen_config import get_model_client, get_model_info
 from src.agents.project_overview_agent import ProjectOverviewAgent
 from src.agents.site_selection_agent import SiteSelectionAgent
@@ -17,6 +19,7 @@ from src.agents.compliance_analysis_agent import ComplianceAnalysisAgent
 from src.agents.rationality_analysis_agent import RationalityAnalysisAgent
 from src.agents.land_use_analysis_agent import LandUseAnalysisAgent
 from src.agents.conclusion_agent import ConclusionAgent
+from src.rag.retriever import Retriever, get_retriever
 
 class AutoGenOrchestrator:
     """
@@ -56,6 +59,9 @@ class AutoGenOrchestrator:
         logger.info(f"AutoGen 编排器初始化完成")
         logger.info(f"  提供商: {model_info['provider']}")
         logger.info(f"  模型: {model_info['model']}")
+        
+        # 知识库检索服务 (可选)
+        self._retriever: Optional[Retriever] = None
     
     def _initialize_agents(self):
         """
@@ -122,6 +128,31 @@ class AutoGenOrchestrator:
             raise ValueError(f"未知的 Agent: {agent_name}")
         
         return self._agents[agent_name]
+    
+    def get_retriever(self) -> Retriever:
+        """
+        获取知识库检索服务
+        
+        如果尚未初始化，则延迟创建 Retriever 实例。
+        
+        Returns:
+            Retriever 实例
+        """
+        if self._retriever is None:
+            self._retriever = get_retriever()
+            logger.info("知识库检索服务初始化完成")
+        
+        return self._retriever
+    
+    def set_retriever(self, retriever: Retriever):
+        """
+        设置知识库检索服务
+        
+        Args:
+            retriever: Retriever 实例
+        """
+        self._retriever = retriever
+        logger.info("知识库检索服务已设置")
     
     def generate_chapter_1(self, project_data: Dict[str, Any]) -> str:
         """

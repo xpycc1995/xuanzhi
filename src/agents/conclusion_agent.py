@@ -12,6 +12,10 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from src.models.conclusion_data import ConclusionData
 from src.utils.logger import logger
+from src.tools.knowledge_tools import (
+    search_regulations,
+    search_cases,
+)
 
 
 class ConclusionAgent:
@@ -26,6 +30,10 @@ class ConclusionAgent:
       - 综合论证一览表（表6-1）
       - 最终可行性结论
     - 6.2 主要建议（固定5条）
+    
+    Wave 5 更新:
+    - 集成知识库检索工具
+    - 支持检索法规标准和案例参考
     """
 
     def __init__(
@@ -57,12 +65,13 @@ class ConclusionAgent:
         self.system_message = self._load_system_message(prompt_template_path)
         self.template_path = prompt_template_path
 
-        # 创建AutoGen AssistantAgent
+        # 创建AutoGen AssistantAgent (带知识库工具)
         self.agent = AssistantAgent(
             name="conclusion_agent",
             model_client=self.model_client,
             system_message=self.system_message,
-            description="负责生成规划选址论证报告第6章'结论与建议'的专业AI Agent"
+            description="负责生成规划选址论证报告第6章'结论与建议'的专业AI Agent",
+            tools=[search_regulations, search_cases],
         )
 
         logger.info(f"结论与建议Agent初始化完成")

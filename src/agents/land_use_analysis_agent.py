@@ -12,6 +12,11 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from src.models.land_use_data import LandUseData
 from src.utils.logger import logger
+from src.tools.knowledge_tools import (
+    search_regulations,
+    search_cases,
+    search_technical_standards,
+)
 
 
 class LandUseAnalysisAgent:
@@ -26,6 +31,10 @@ class LandUseAnalysisAgent:
     - 采用的节地技术
     - 案例对比情况
     - 节约集约用地小结
+    
+    Wave 5 更新:
+    - 集成知识库检索工具
+    - 支持检索法规标准、案例参考和技术标准
     """
 
     def __init__(
@@ -57,12 +66,13 @@ class LandUseAnalysisAgent:
         self.system_message = self._load_system_message(prompt_template_path)
         self.template_path = prompt_template_path
 
-        # 创建AutoGen AssistantAgent
+        # 创建AutoGen AssistantAgent (带知识库工具)
         self.agent = AssistantAgent(
             name="land_use_analysis_agent",
             model_client=self.model_client,
             system_message=self.system_message,
-            description="负责生成规划选址论证报告第5章'建设项目节约集约用地分析'的专业AI Agent"
+            description="负责生成规划选址论证报告第5章'建设项目节约集约用地分析'的专业AI Agent",
+            tools=[search_regulations, search_cases, search_technical_standards],
         )
 
         logger.info(f"节约集约用地分析Agent初始化完成")
