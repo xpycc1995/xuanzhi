@@ -10,6 +10,7 @@ from .compliance_analysis_agent import ComplianceAnalysisAgent
 from .rationality_analysis_agent import RationalityAnalysisAgent
 from .land_use_analysis_agent import LandUseAnalysisAgent
 from .conclusion_agent import ConclusionAgent
+from .excel_assistant_agent import ExcelAssistantAgent
 
 __all__ = [
     'ProjectOverviewAgent',
@@ -18,30 +19,5 @@ __all__ = [
     'RationalityAnalysisAgent',
     'LandUseAnalysisAgent',
     'ConclusionAgent',
-]
-from .site_selection_agent import SiteSelectionAgent
-from .compliance_analysis_agent import ComplianceAnalysisAgent
-from .rationality_analysis_agent import RationalityAnalysisAgent
-from .land_use_analysis_agent import LandUseAnalysisAgent
-from .conclusion_agent import ConclusionAgent
-
-__all__ = [
-    'ProjectOverviewAgent',
-    'SiteSelectionAgent',
-    'ComplianceAnalysisAgent',
-    'RationalityAnalysisAgent',
-    'LandUseAnalysisAgent',
-    'ConclusionAgent',
-]
-from .site_selection_agent import SiteSelectionAgent
-from .compliance_analysis_agent import ComplianceAnalysisAgent
-from .rationality_analysis_agent import RationalityAnalysisAgent
-from .land_use_analysis_agent import LandUseAnalysisAgent
-
-__all__ = [
-    'ProjectOverviewAgent',
-    'SiteSelectionAgent',
-    'ComplianceAnalysisAgent',
-    'RationalityAnalysisAgent',
-    'LandUseAnalysisAgent',
+    'ExcelAssistantAgent',
 ]

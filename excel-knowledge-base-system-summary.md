@@ -26,10 +26,12 @@
 | Task 7: 百炼Embedding | ✅ | `src/rag/embedding.py` |
 | Task 8: 单元测试 | ✅ | `tests/test_rag/test_rag_system.py` (28个测试通过) |
 
-### Wave 3: 检索服务 ⏳ 待开发
-- **Task 9**: 实现检索服务 (Retriever, Top-K返回, 阈值过滤)
-- **Task 10**: 实现CLI知识库命令 (kb-init, kb-add, kb-query, kb-list)
-- **Task 11**: 检索功能测试
+### Wave 3: 检索服务 ✅ 完成 (2026-02-27)
+| 任务 | 状态 | 文件 |
+|------|------|------|
+| Task 9: Retriever检索服务 | ✅ | `src/rag/retriever.py` |
+| Task 10: CLI知识库命令 | ✅ | `scripts/kb.py` |
+| Task 11: 检索功能测试 | ✅ | `tests/test_rag/test_wave3_retriever.py` (10个测试通过) |
 
 ### Wave 4: Excel智能体 ⏳ 待开发
 - **Task 12**: 实现FunctionTools (read_excel, search_knowledge_base, write_excel)
@@ -54,14 +56,19 @@
 
 ```
 src/rag/
-├── __init__.py              # 模块导出
+├── __init__.py              # 模块导出 (含Retriever)
 ├── document_processor.py    # 多格式文档解析 (PDF/Word/MD/TXT)
 ├── text_chunker.py          # 重叠滑动窗口分块 (512字符, 128重叠)
 ├── knowledge_base.py        # ChromaDB封装 (向量存储/检索)
-└── embedding.py             # 百炼Embedding API (text-embedding-v3, 1024维)
+├── embedding.py             # 百炼Embedding API (text-embedding-v3, 1024维)
+└── retriever.py             # 高级检索服务 (Wave 3新增)
+
+scripts/
+└── kb.py                    # CLI知识库命令 (Wave 3新增)
 
 tests/test_rag/
-└── test_rag_system.py       # 28个单元测试
+├── test_rag_system.py       # 28个单元测试
+└── test_wave3_retriever.py  # 10个Wave 3测试
 
 data/
 ├── knowledge_base/          # 知识库文档存储
@@ -77,8 +84,52 @@ src/rag/knowledge_base.py     80% ✅
 src/rag/text_chunker.py       82% ✅
 src/rag/document_processor.py 40% (PDF/Word解析未覆盖)
 src/rag/embedding.py          40% (API调用使用mock)
+src/rag/retriever.py          新增 (待覆盖率统计)
 ─────────────────────────────────────────
-总计: 28个测试通过
+总计: 38个测试通过 (Wave 1-2: 28 + Wave 3: 10)
+```
+
+---
+
+## Wave 3 新增功能
+
+### Retriever检索服务
+```python
+from src.rag import Retriever
+
+# 初始化
+retriever = Retriever()
+
+# 摄取文档
+retriever.ingest_file("regulations.pdf")
+retriever.ingest_directory("data/knowledge_base/")
+
+# 语义检索
+results = retriever.search("城乡规划要求", n_results=5, threshold=0.7)
+
+# 获取LLM上下文
+context = retriever.search_with_context("项目选址原则")
+```
+
+### CLI命令
+```bash
+# 初始化知识库
+python scripts/kb.py init
+
+# 添加文档
+python scripts/kb.py add data/knowledge_base/
+
+# 检索
+python scripts/kb.py query "城乡规划要求" --top-k 5 --threshold 0.7
+
+# 统计
+python scripts/kb.py stats
+
+# 列出文档
+python scripts/kb.py list --limit 20
+
+# 清空
+python scripts/kb.py clear --force
 ```
 
 ---
@@ -119,35 +170,16 @@ T2 → T4 → T6 → T9 → T12 → T13 → T16 → T17 → T18 → F3 → F4
 # 1. 知识库初始化 ✅
 python -c "from src.rag import KnowledgeBase; kb = KnowledgeBase(); print(f'文档数: {kb.count()}')"
 
-# 2. 文档索引 (待实现)
-python scripts/test_rag.py --ingest test_docs/ --assert-count 5
+# 2. CLI命令 ✅
+python scripts/kb.py --help
+python scripts/kb.py init
+python scripts/kb.py stats
 
-# 3. 检索测试 (待实现)
-python scripts/test_rag.py --search "项目选址原则" --assert-top-k 5
+# 3. Retriever检索 ✅
+python -c "from src.rag import Retriever; r = Retriever(); print(r.get_stats())"
 
-# 4. Excel智能体 (待实现)
-python scripts/test_excel_assistant.py --input test.xlsx --assert-fields-filled 80
-
-# 5. CLI命令 (待实现)
-fill-excel test.xlsx --output filled.xlsx --top-k 5 --threshold 0.7
-
-# 6. 单元测试 ✅
+# 4. 单元测试 ✅
 pytest tests/test_rag/ -v --cov=src/rag
-```
-
----
-
-## 已验证的验收命令
-
-```bash
-# Wave 1-2 验收
-source /Users/yc/miniconda/bin/activate xuanzhi
-pytest tests/test_rag/test_rag_system.py -v --cov=src/rag
-
-# 输出:
-# 28 passed, 3 deselected
-# src/rag/knowledge_base.py   80%
-# src/rag/text_chunker.py     82%
 ```
 
 ---
@@ -161,11 +193,14 @@ pytest tests/test_rag/test_rag_system.py -v --cov=src/rag
 | PDF解析 | pypdf | 6.7.3 |
 | Word解析 | python-docx | 已安装 |
 | 测试框架 | pytest + pytest-cov | 8.3.4 + 7.0.0 |
+| CLI框架 | typer + rich | 0.24.1 |
 
 ---
 
-## 详细任务列表
+## Git提交历史
 
-由于token限制,详细任务描述见 `.sisyphus/drafts/后续开发方案.md` 中的"开发里程碑"部分。
-
-如需要完整的详细工作计划(包含每个任务的QA场景、Agent Profile、Parallelization信息),请告知,我将生成多个文件分批提供。
+```
+8cf0c4c feat(wave3): 实现RAG检索服务和CLI知识库命令
+1a73b44 feat: 添加RAG知识库模块 (Wave 1-2完成)
+4ebb7f8 Initial commit: 规划选址论证报告AI智能体协作系统
+```
