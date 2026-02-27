@@ -7,11 +7,11 @@
 
 ## OVERVIEW
 
-规划选址论证报告AI智能体协作系统 - 基于AutoGen框架的多Agent协作系统，自动生成规划选址综合论证报告。Python 3.10+, FastAPI + AutoGen + Pydantic + python-docx.
+规划选址论证报告AI智能体协作系统 - 基于AutoGen框架的多Agent协作系统，自动生成规划选址综合论证报告。Python 3.10+, FastAPI + AutoGen + Pydantic + python-docx + ChromaDB.
 本地开发环境：/Users/yc/miniconda/envs/xuanzhi/bin
 **重要:** 项目已迁移至新版 `autogen-agentchat` API (0.7.x)，不再使用旧版 `pyautogen`。
 
-**项目状态: ✅ 全部6章Agent开发完成**
+**项目状态: ✅ 全部6章Agent开发完成 + RAG知识库模块**
 
 ## STRUCTURE
 ```
@@ -20,14 +20,24 @@ xuanzhi/
 │   ├── agents/             # Agent层 - 6个专业AI智能体
 │   ├── models/             # 数据层 - 6个Pydantic验证模型
 │   ├── services/           # 服务层 - 编排/文档/解析
+│   ├── rag/                # RAG知识库 - 向量检索增强生成
+│   │   ├── document_processor.py  # 多格式文档解析
+│   │   ├── text_chunker.py        # 重叠滑动窗口分块
+│   │   ├── knowledge_base.py      # ChromaDB封装
+│   │   └── embedding.py           # 百炼Embedding API
 │   ├── core/               # 配置 - LLM配置加载
 │   └── utils/              # 工具 - 日志配置
 ├── templates/
 │   ├── prompts/            # Agent提示词模板 (6个*.md)
 │   ├── word_templates/     # Word报告模板
 │   └── excel_templates/    # Excel数据输入模板
+├── tests/
+│   ├── test_rag/           # RAG知识库测试 (28个测试)
+│   └── test_*.py           # Agent单元测试
+├── data/
+│   ├── knowledge_base/     # 知识库文档存储
+│   └── chroma_db/          # ChromaDB向量数据库
 ├── scripts/                # 测试脚本入口
-├── tests/                  # pytest单元测试
 └── output/                 # 运行时输出 (报告/日志)
 ```
 
@@ -41,6 +51,11 @@ xuanzhi/
 | Excel解析问题 | `src/services/excel_parser.py` | 支持全部6章解析 |
 | Word文档生成 | `src/services/document_service.py` | 模板替换+Markdown解析 |
 | LLM配置 | `src/core/autogen_config.py` | OpenAIChatCompletionClient |
+| **RAG知识库** | `src/rag/` | ChromaDB + 百炼Embedding |
+| 文档解析 | `src/rag/document_processor.py` | PDF/Word/MD/TXT |
+| 文本分块 | `src/rag/text_chunker.py` | 512字符块, 128重叠 |
+| 向量存储 | `src/rag/knowledge_base.py` | ChromaDB封装 |
+| Embedding | `src/rag/embedding.py` | text-embedding-v3, 1024维 |
 | 提示词模板 | `templates/prompts/*.md` | 6个章节模板 |
 | 测试入口 | `scripts/test_all_agents.py` | 全部Agent验证 |
 
@@ -50,6 +65,8 @@ xuanzhi/
 Excel模板 → ExcelParser → Pydantic模型 → Agent生成 → DocumentService → Word报告
                     ↓
               AutoGenOrchestrator (协调中心)
+                    ↓
+              KnowledgeBase (RAG知识库)
 ```
 
 ## COMPLETED AGENTS
@@ -62,6 +79,38 @@ Excel模板 → ExcelParser → Pydantic模型 → Agent生成 → DocumentServi
 | 第4章 | RationalityAnalysisAgent | RationalityData | rationality_analysis.md | ✅ |
 | 第5章 | LandUseAnalysisAgent | LandUseData | land_use_analysis.md | ✅ |
 | 第6章 | ConclusionAgent | ConclusionData | conclusion.md | ✅ |
+
+## RAG MODULE
+
+### 已完成功能
+| 模块 | 文件 | 功能 | 测试覆盖率 |
+|------|------|------|-----------|
+| DocumentProcessor | document_processor.py | PDF/Word/MD/TXT解析 | 40% |
+| TextChunker | text_chunker.py | 重叠滑动窗口分块 | 82% |
+| KnowledgeBase | knowledge_base.py | ChromaDB向量存储/检索 | 80% |
+| BailianEmbedding | embedding.py | 百炼text-embedding-v3 API | 40% |
+
+### 使用示例
+
+```python
+from src.rag import KnowledgeBase, DocumentProcessor, TextChunker
+
+# 1. 处理文档
+processor = DocumentProcessor()
+doc = processor.process_file("regulations.pdf")
+
+# 2. 文本分块
+chunker = TextChunker(chunk_size=512, overlap=128)
+chunks = chunker.chunk_text(doc.content)
+
+# 3. 存入知识库
+kb = KnowledgeBase()
+texts = [c.content for c in chunks]
+kb.add_documents(texts)
+
+# 4. 语义检索
+results = kb.search("城乡规划要求", n_results=5)
+```
 
 ## CONVENTIONS
 
@@ -77,6 +126,7 @@ Excel模板 → ExcelParser → Pydantic模型 → Agent生成 → DocumentServi
 from typing import Dict, Any
 from pydantic import BaseModel
 from src.utils.logger import logger
+from src.rag import KnowledgeBase
 ```
 
 ### Pydantic模型
@@ -103,6 +153,11 @@ from src.utils.logger import logger
 - 使用 `OpenAIChatCompletionClient` 初始化模型客户端
 - 不再需要 `UserProxyAgent`
 - Agent 调用使用 `await agent.run(task=...)`
+
+### RAG知识库
+- ChromaDB要求metadata非空
+- Embedding维度: 1024 (text-embedding-v3)
+- 默认检索: Top-5, 阈值0.7
 
 ### 数据验证
 - 备选方案: **必须2个** (不多不少)
@@ -135,6 +190,9 @@ python scripts/test_all_agents.py        # 全部Agent测试
 python scripts/test_excel_input.py all   # Excel输入测试
 python scripts/create_excel_template.py  # 创建Excel模板
 
+# RAG测试
+pytest tests/test_rag/ -v --cov=src/rag  # RAG模块测试 (28个测试)
+
 # 代码质量
 black src/ && flake8 src/ && pytest tests/
 ```
@@ -155,10 +213,11 @@ black src/ && flake8 src/ && pytest tests/
 - `.env` - API密钥配置 (不提交)
 - `templates/excel_templates/项目数据模板.xlsx` - 数据输入模板
 - `templates/word_templates/标准模板.docx` - 报告输出模板
+- `data/chroma_db/` - ChromaDB向量数据库
 
 ### 未实现模块
 - `src/api/` - FastAPI Web接口 (计划中)
-- `config/` - 配置目录 (为空, 配置在根目录)
+- Wave 3-5: CLI命令, Excel智能体, Agent集成 (开发中)
 
 ## API VERSION
 
