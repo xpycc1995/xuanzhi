@@ -17,6 +17,29 @@ conda env create -f environment.yml && conda activate xuanzhi
 # API配置 (.env): DASHSCOPE_API_KEY=sk-xxx, MODEL_NAME=qwen-plus
 ```
 
+### 统一CLI入口 (main.py)
+
+```bash
+# 查看帮助
+python main.py --help
+
+# 报告生成
+python main.py generate 项目数据.xlsx                    # 生成报告
+python main.py generate 项目数据.xlsx -o output/报告.docx # 指定输出路径
+python main.py generate 项目数据.xlsx --no-knowledge     # 不使用知识库
+
+# 知识库管理
+python main.py kb init                    # 初始化
+python main.py kb add data/knowledge_base/ # 添加文档
+python main.py kb query "城乡规划"        # 检索
+python main.py kb stats                   # 统计
+
+# 系统状态
+python main.py status                     # 显示系统状态
+python main.py version                    # 显示版本信息
+python main.py quickstart                 # 快速开始指南
+```
+
 ### 测试命令
 ```bash
 # 全部测试
@@ -44,30 +67,11 @@ black src/           # 格式化 (无配置文件, 使用默认)
 flake8 src/          # 代码检查 (无配置文件)
 ```
 
-### 验证命令
-```bash
-python test_qwen.py                      # LLM连接验证
-python scripts/test_all_agents.py        # 全部Agent测试
-python scripts/test_excel_input.py all   # Excel输入测试
-```
-
-### CLI命令
-```bash
-# 知识库管理
-python scripts/kb.py init                  # 初始化
-python scripts/kb.py add data/knowledge_base/  # 添加文档
-python scripts/kb.py query "城乡规划"      # 检索
-python scripts/kb.py stats                 # 统计
-
-# Excel智能填充
-python scripts/fill_excel.py analyze 项目数据.xlsx
-python scripts/fill_excel.py fill 项目数据.xlsx
-```
-
 ## STRUCTURE
 
 ```
 xuanzhi/
+├── main.py               # 统一CLI入口
 ├── src/
 │   ├── agents/           # Agent层 - 7个专业AI智能体
 │   ├── models/           # 数据层 - Pydantic验证模型 (中文命名)
@@ -80,7 +84,7 @@ xuanzhi/
 │   ├── word_templates/   # Word报告模板
 │   └── excel_templates/  # Excel数据输入模板
 ├── tests/                # pytest单元测试
-├── scripts/              # CLI脚本入口
+├── scripts/              # 辅助脚本
 └── data/chroma_db/       # ChromaDB向量数据库
 ```
 
@@ -88,6 +92,7 @@ xuanzhi/
 
 | 任务 | 位置 |
 |------|------|
+| CLI入口 | `main.py` - 统一命令行接口 |
 | 添加新Agent | `src/agents/` → 传入model_client, 加载模板 |
 | 修改数据结构 | `src/models/` → Pydantic BaseModel, 中文命名 |
 | 调整编排逻辑 | `src/services/autogen_orchestrator_v2.py` |

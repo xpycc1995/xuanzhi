@@ -26,7 +26,7 @@
 - ✅ **RAG知识库**: 基于ChromaDB的本地向量检索增强生成
 - ✅ **多格式文档解析**: 支持PDF/Word/Markdown/TXT
 - ✅ **百炼Embedding**: text-embedding-v3，1024维向量
-- ✅ **CLI命令**: kb.py知识库管理 + fill_excel.py智能填充
+- ✅ **统一CLI**: `main.py` 提供完整命令行接口
 - ✅ **新版API**: 基于autogen-agentchat 0.7.x，异步调用更高效
 - ✅ **低成本**: 使用国产模型可节省70-90%成本
 
@@ -75,29 +75,52 @@ DASHSCOPE_API_KEY=sk-你的API密钥
 MODEL_NAME=qwen-plus
 
 # 4. 验证配置
-python test_qwen.py
+python main.py status
 ```
 
-### 3. 运行测试
+### 3. 生成报告
 
 ```bash
-# 测试LLM连接
-python test_qwen.py
+# 初始化知识库
+python main.py kb init
+python main.py kb add data/knowledge_base/
 
-# 测试全部Agent
-python scripts/test_all_agents.py
-
-# 测试Excel输入流程
-python scripts/test_excel_input.py all
-
-# 运行RAG知识库测试
-pytest tests/test_rag/ -v --cov=src/rag
-
-# 运行全部测试
-pytest tests/
+# 生成报告
+python main.py generate 项目数据.xlsx
 ```
 
-## 测试命令详解
+## CLI命令 (统一入口 main.py)
+
+### 报告生成
+
+```bash
+python main.py generate 项目数据.xlsx                    # 生成报告
+python main.py generate 项目数据.xlsx -o output/报告.docx # 指定输出路径
+python main.py generate 项目数据.xlsx --no-knowledge     # 不使用知识库
+python main.py generate 项目数据.xlsx -v                 # 详细输出
+```
+
+### 知识库管理
+
+```bash
+python main.py kb init                    # 初始化
+python main.py kb add data/knowledge_base/ # 添加文档
+python main.py kb query "城乡规划"        # 检索
+python main.py kb query "规划" -k 10      # 指定返回数量
+python main.py kb stats                   # 统计
+python main.py kb clear --force           # 清空
+```
+
+### 系统命令
+
+```bash
+python main.py status     # 显示系统状态
+python main.py version    # 显示版本信息
+python main.py quickstart # 快速开始指南
+python main.py --help     # 查看帮助
+```
+
+## 测试命令
 
 ```bash
 # 全部测试
@@ -106,10 +129,8 @@ pytest tests/ -v
 # 单个测试文件
 pytest tests/test_rag/test_rag_system.py -v
 
-# 单个测试类
+# 单个测试类/函数
 pytest tests/test_rag/test_rag_system.py::TestKnowledgeBase -v
-
-# 单个测试函数
 pytest tests/test_rag/test_rag_system.py::TestKnowledgeBase::test_add_documents -v
 
 # 带覆盖率
@@ -118,36 +139,14 @@ pytest tests/test_rag/ -v --cov=src/rag
 # 按标记运行
 pytest tests/ -m "unit" -v          # 单元测试
 pytest tests/ -m "integration" -v   # 集成测试
-pytest tests/ -m "slow" -v          # 慢速测试
 pytest tests/ -m "rag" -v           # RAG知识库测试
-```
-
-## CLI命令
-
-### 知识库管理
-
-```bash
-python scripts/kb.py init                           # 初始化
-python scripts/kb.py add data/knowledge_base/       # 添加文档
-python scripts/kb.py query "城乡规划" --top-k 5     # 检索
-python scripts/kb.py stats                          # 统计
-python scripts/kb.py list --limit 20                # 列出文档
-python scripts/kb.py clear --force                  # 清空
-```
-
-### Excel智能填充
-
-```bash
-python scripts/fill_excel.py analyze 项目数据.xlsx           # 分析空白字段
-python scripts/fill_excel.py fill 项目数据.xlsx              # 自动填充
-python scripts/fill_excel.py fill 项目数据.xlsx -o 输出.xlsx  # 输出到新文件
-python scripts/fill_excel.py query "项目名称" -c "杭州市"    # 检索特定字段
 ```
 
 ## 项目结构
 
 ```
 xuanzhi/
+├── main.py               # 统一CLI入口
 ├── src/
 │   ├── agents/           # Agent层 - 7个专业AI智能体
 │   ├── models/           # 数据层 - Pydantic验证模型（中文命名）
@@ -160,7 +159,7 @@ xuanzhi/
 │   ├── word_templates/   # Word报告模板
 │   └── excel_templates/  # Excel数据输入模板
 ├── tests/                # pytest单元测试
-├── scripts/              # CLI脚本入口
+├── scripts/              # 辅助脚本
 └── data/chroma_db/       # ChromaDB向量数据库
 ```
 
